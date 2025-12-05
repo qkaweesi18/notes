@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true };
         } catch (err) {
+            console.error("Signup Error:", err.code, err.message);
             setError(getErrorMessage(err.code));
             return { success: false, error: getErrorMessage(err.code) };
         }
@@ -128,6 +129,7 @@ export const AuthProvider = ({ children }) => {
             await signInWithEmailAndPassword(auth, email, password);
             return { success: true };
         } catch (err) {
+            console.error("Login Error:", err.code, err.message);
             setError(getErrorMessage(err.code));
             return { success: false, error: getErrorMessage(err.code) };
         }
@@ -170,6 +172,8 @@ export const AuthProvider = ({ children }) => {
                 return 'Too many attempts. Please try again later';
             case 'auth/invalid-credential':
                 return 'Invalid email or password';
+            case 'auth/operation-not-allowed':
+                return 'Email/Password login is not enabled in Firebase Console';
             default:
                 return 'An error occurred. Please try again';
         }
