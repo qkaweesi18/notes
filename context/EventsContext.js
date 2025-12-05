@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { loadEvents, saveEvents } from '../utils/storage';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, orderBy, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
 const EventsContext = createContext();
@@ -20,7 +20,8 @@ export const EventsProvider = ({ children }) => {
             // Firestore Sync
             const q = query(
                 collection(db, 'events'),
-                where('userId', '==', user.uid)
+                where('userId', '==', user.uid),
+                orderBy('createdAt', 'desc')
             );
 
             unsubscribe = onSnapshot(q, (snapshot) => {
@@ -50,7 +51,7 @@ export const EventsProvider = ({ children }) => {
             await addDoc(collection(db, 'events'), {
                 userId: user.uid,
                 ...eventData,
-                createdAt: new Date().toISOString(),
+                createdAt: serverTimestamp(),
             });
         } else {
             const newEvent = {
