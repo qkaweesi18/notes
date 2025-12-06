@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, Animated, Pressable, useWindowDimensions, ScrollView } from 'react-native';
 import { useEvents } from '../context/EventsContext';
 import EventModal from '../components/EventModal';
 import MonthYearPicker from '../components/MonthYearPicker';
@@ -37,6 +37,9 @@ const CalendarScreen = ({ theme }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [pickerVisible, setPickerVisible] = useState(false);
     const [editingEvent, setEditingEvent] = useState(null);
+
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768;
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -206,118 +209,130 @@ const CalendarScreen = ({ theme }) => {
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            {/* Calendar Card */}
-            <View style={[styles.calendarContainer, { backgroundColor: theme.surface }]}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={prevMonth}
-                        style={[styles.navButton, { backgroundColor: theme.backgroundSecondary || theme.background }]}
-                    >
-                        <Text style={[styles.navText, { color: theme.text }]}>‹</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={() => setPickerVisible(true)}
-                        style={styles.monthSelector}
-                    >
-                        <Text style={[styles.monthTitle, { color: theme.text }]}>
-                            {format(currentMonth, 'MMMM yyyy')}
-                        </Text>
-                        <Text style={[styles.monthDropdown, { color: theme.primary }]}>▾</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={nextMonth}
-                        style={[styles.navButton, { backgroundColor: theme.backgroundSecondary || theme.background }]}
-                    >
-                        <Text style={[styles.navText, { color: theme.text }]}>›</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Quick jump to today */}
-                {!isToday(selectedDate) && (
-                    <TouchableOpacity
-                        style={[styles.todayButton, { backgroundColor: theme.primaryLight }]}
-                        onPress={goToToday}
-                    >
-                        <Text style={[styles.todayButtonText, { color: theme.primary }]}>Today</Text>
-                    </TouchableOpacity>
-                )}
-
-                {/* Divider */}
-                <View style={[styles.divider, { backgroundColor: theme.divider }]} />
-
-                {/* Weekday Headers */}
-                <Animated.View style={[styles.weekRow, { opacity: fadeAnim }]}>
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                        <View key={index} style={styles.weekDayCell}>
-                            <Text style={[
-                                styles.weekDayText,
-                                { color: theme.textSecondary },
-                                (index === 0 || index === 6) && { color: theme.textTertiary || theme.textSecondary }
-                            ]}>
-                                {day}
-                            </Text>
-                        </View>
-                    ))}
-                </Animated.View>
-
-                {/* Calendar Grid */}
-                <Animated.View style={[styles.daysGrid, { opacity: fadeAnim }]}>
-                    {calendarDays.map((day, index) => renderDay(day, index))}
-                </Animated.View>
-            </View>
-
-            {/* Selected Date Events */}
-            <View style={styles.eventsContainer}>
-                <View style={styles.eventsHeader}>
-                    <View>
-                        <Text style={[styles.selectedDateTitle, { color: theme.text }]}>
-                            {format(selectedDate, 'EEEE')}
-                        </Text>
-                        <Text style={[styles.selectedDateSubtitle, { color: theme.textSecondary }]}>
-                            {format(selectedDate, 'MMMM d, yyyy')}
-                        </Text>
-                    </View>
-                    <TouchableOpacity
-                        style={[styles.addButton, { backgroundColor: theme.primary }]}
-                        onPress={handleAddEvent}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={styles.addButtonIcon}>+</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {eventsForSelectedDate.length > 0 ? (
-                    <FlatList
-                        data={eventsForSelectedDate}
-                        keyExtractor={item => item.id}
-                        renderItem={renderEventItem}
-                        contentContainerStyle={styles.listContent}
-                        showsVerticalScrollIndicator={false}
-                    />
-                ) : (
-                    <View style={styles.emptyState}>
-                        <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary || theme.background }]}>
-                            <Text style={styles.emptyIcon}>📅</Text>
-                        </View>
-                        <Text style={[styles.emptyTitle, { color: theme.text }]}>
-                            No events
-                        </Text>
-                        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                            Your schedule is clear for this day
-                        </Text>
+            <View style={[
+                styles.contentContainer,
+                isDesktop && styles.desktopContainer
+            ]}>
+                {/* Calendar Card */}
+                <View style={[
+                    styles.calendarContainer,
+                    { backgroundColor: theme.surface },
+                    isDesktop && styles.desktopCalendar
+                ]}>
+                    {/* Header */}
+                    <View style={styles.header}>
                         <TouchableOpacity
-                            style={[styles.createButton, { backgroundColor: theme.primaryLight }]}
-                            onPress={handleAddEvent}
+                            onPress={prevMonth}
+                            style={[styles.navButton, { backgroundColor: theme.backgroundSecondary || theme.background }]}
                         >
-                            <Text style={[styles.createButtonText, { color: theme.primary }]}>
-                                + Create Event
+                            <Text style={[styles.navText, { color: theme.text }]}>‹</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => setPickerVisible(true)}
+                            style={styles.monthSelector}
+                        >
+                            <Text style={[styles.monthTitle, { color: theme.text }]}>
+                                {format(currentMonth, 'MMMM yyyy')}
                             </Text>
+                            <Text style={[styles.monthDropdown, { color: theme.primary }]}>▾</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={nextMonth}
+                            style={[styles.navButton, { backgroundColor: theme.backgroundSecondary || theme.background }]}
+                        >
+                            <Text style={[styles.navText, { color: theme.text }]}>›</Text>
                         </TouchableOpacity>
                     </View>
-                )}
+
+                    {/* Quick jump to today */}
+                    {!isToday(selectedDate) && (
+                        <TouchableOpacity
+                            style={[styles.todayButton, { backgroundColor: theme.primaryLight }]}
+                            onPress={goToToday}
+                        >
+                            <Text style={[styles.todayButtonText, { color: theme.primary }]}>Today</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Divider */}
+                    <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+
+                    {/* Weekday Headers */}
+                    <Animated.View style={[styles.weekRow, { opacity: fadeAnim }]}>
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                            <View key={index} style={styles.weekDayCell}>
+                                <Text style={[
+                                    styles.weekDayText,
+                                    { color: theme.textSecondary },
+                                    (index === 0 || index === 6) && { color: theme.textTertiary || theme.textSecondary }
+                                ]}>
+                                    {day}
+                                </Text>
+                            </View>
+                        ))}
+                    </Animated.View>
+
+                    {/* Calendar Grid */}
+                    <Animated.View style={[styles.daysGrid, { opacity: fadeAnim }]}>
+                        {calendarDays.map((day, index) => renderDay(day, index))}
+                    </Animated.View>
+                </View>
+
+                {/* Selected Date Events */}
+                <View style={[
+                    styles.eventsContainer,
+                    isDesktop && styles.desktopEvents
+                ]}>
+                    <View style={styles.eventsHeader}>
+                        <View>
+                            <Text style={[styles.selectedDateTitle, { color: theme.text }]}>
+                                {format(selectedDate, 'EEEE')}
+                            </Text>
+                            <Text style={[styles.selectedDateSubtitle, { color: theme.textSecondary }]}>
+                                {format(selectedDate, 'MMMM d, yyyy')}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.addButton, { backgroundColor: theme.primary }]}
+                            onPress={handleAddEvent}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.addButtonIcon}>+</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {eventsForSelectedDate.length > 0 ? (
+                        <FlatList
+                            data={eventsForSelectedDate}
+                            keyExtractor={item => item.id}
+                            renderItem={renderEventItem}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={false}
+                        />
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary || theme.background }]}>
+                                <Text style={styles.emptyIcon}>📅</Text>
+                            </View>
+                            <Text style={[styles.emptyTitle, { color: theme.text }]}>
+                                No events
+                            </Text>
+                            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                                Your schedule is clear for this day
+                            </Text>
+                            <TouchableOpacity
+                                style={[styles.createButton, { backgroundColor: theme.primaryLight }]}
+                                onPress={handleAddEvent}
+                            >
+                                <Text style={[styles.createButtonText, { color: theme.primary }]}>
+                                    + Create Event
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             </View>
 
             <EventModal
@@ -344,6 +359,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    contentContainer: {
+        flex: 1,
+        flexDirection: 'column',
+    },
+    desktopContainer: {
+        flexDirection: 'row',
+        padding: 20,
+        gap: 20,
+        maxWidth: 1200,
+        alignSelf: 'center',
+        width: '100%',
+    },
     calendarContainer: {
         margin: 16,
         marginBottom: 8,
@@ -354,6 +381,12 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 12,
         elevation: 4,
+    },
+    desktopCalendar: {
+        flex: 1,
+        margin: 0,
+        maxWidth: 500,
+        height: 'fit-content',
     },
     header: {
         flexDirection: 'row',
@@ -461,6 +494,10 @@ const styles = StyleSheet.create({
     eventsContainer: {
         flex: 1,
         paddingHorizontal: 16,
+    },
+    desktopEvents: {
+        paddingHorizontal: 0,
+        backgroundColor: 'transparent',
     },
     eventsHeader: {
         flexDirection: 'row',
