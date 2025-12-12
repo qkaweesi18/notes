@@ -620,6 +620,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
     },
+    subHeader: {
+        position: 'absolute',
+        top: 16,
+        left: 16,
+    },
+    profileButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
 });
 
 export default CalendarScreen;

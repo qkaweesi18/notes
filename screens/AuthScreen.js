@@ -21,7 +21,15 @@ const AuthScreen = ({ theme }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [localError, setLocalError] = useState('');
 
-    const { login, signup, error } = useAuth();
+    // Password Validation State
+    const [passwordCriteria, setPasswordCriteria] = useState({
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        numberOrSymbol: false
+    });
+
+    const { login, signup, error, loginAsGuest } = useAuth();
 
     // Animations
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -53,6 +61,21 @@ const AuthScreen = ({ theme }) => {
         }).start();
     }, [isLogin]);
 
+    // Validate password on change
+    useEffect(() => {
+        const criteria = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            numberOrSymbol: /[0-9!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+        setPasswordCriteria(criteria);
+    }, [password]);
+
+    const isPasswordValid = () => {
+        return Object.values(passwordCriteria).every(Boolean);
+    };
+
     const handleSubmit = async () => {
         setLocalError('');
 
@@ -61,9 +84,15 @@ const AuthScreen = ({ theme }) => {
             return;
         }
 
-        if (!isLogin && !displayName.trim()) {
-            setLocalError('Please enter your name');
-            return;
+        if (!isLogin) {
+            if (!displayName.trim()) {
+                setLocalError('Please enter your name');
+                return;
+            }
+            if (!isPasswordValid()) {
+                setLocalError('Please meet all password requirements');
+                return;
+            }
         }
 
         setIsLoading(true);
@@ -93,6 +122,24 @@ const AuthScreen = ({ theme }) => {
     };
 
     const displayError = localError || error;
+
+    const renderPasswordRequirements = () => {
+        if (isLogin) return null;
+
+        return (
+            <View style={styles.requirementsContainer}>
+                <Text style={[styles.requirementsTitle, { color: theme.textSecondary }]}>
+                    Password must contain:
+                </Text>
+                <View style={styles.criteriaRow}>
+                    <CriteriaItem label="8+ chars" met={passwordCriteria.length} theme={theme} />
+                    <CriteriaItem label="Uppercase" met={passwordCriteria.uppercase} theme={theme} />
+                    <CriteriaItem label="Lowercase" met={passwordCriteria.lowercase} theme={theme} />
+                    <CriteriaItem label="Number/Symbol" met={passwordCriteria.numberOrSymbol} theme={theme} />
+                </View>
+            </View>
+        );
+    };
 
     return (
         <KeyboardAvoidingView
@@ -190,6 +237,7 @@ const AuthScreen = ({ theme }) => {
                                     onChangeText={setPassword}
                                     secureTextEntry
                                 />
+                                {renderPasswordRequirements()}
                             </View>
 
                             {/* Error message */}
@@ -206,10 +254,10 @@ const AuthScreen = ({ theme }) => {
                                 style={[
                                     styles.submitButton,
                                     { backgroundColor: theme.primary },
-                                    isLoading && { opacity: 0.7 }
+                                    (isLoading || (!isLogin && !isPasswordValid())) && { opacity: 0.5, backgroundColor: theme.textTertiary || '#ccc' }
                                 ]}
                                 onPress={handleSubmit}
-                                disabled={isLoading}
+                                disabled={isLoading || (!isLogin && !isPasswordValid())}
                                 activeOpacity={0.8}
                             >
                                 {isLoading ? (
@@ -238,6 +286,16 @@ const AuthScreen = ({ theme }) => {
                                     {isLogin ? 'Create new account' : 'I already have an account'}
                                 </Text>
                             </TouchableOpacity>
+
+                            {/* Guest Mode */}
+                            <TouchableOpacity
+                                style={styles.guestButton}
+                                onPress={() => loginAsGuest()}
+                            >
+                                <Text style={[styles.guestButtonText, { color: theme.textSecondary }]}>
+                                    Continue as Guest
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -250,6 +308,21 @@ const AuthScreen = ({ theme }) => {
         </KeyboardAvoidingView>
     );
 };
+
+const CriteriaItem = ({ label, met, theme }) => (
+    <View style={styles.criteriaItem}>
+        <View style={[
+            styles.criteriaDot,
+            { backgroundColor: met ? theme.success || '#10B981' : theme.border }
+        ]} />
+        <Text style={[
+            styles.criteriaText,
+            { color: met ? theme.text : theme.textTertiary || theme.textSecondary }
+        ]}>
+            {label}
+        </Text>
+    </View>
+);
 
 const styles = StyleSheet.create({
     container: {
@@ -322,6 +395,35 @@ const styles = StyleSheet.create({
         fontSize: 16,
         borderWidth: 1,
     },
+    requirementsContainer: {
+        marginTop: 12,
+    },
+    requirementsTitle: {
+        fontSize: 12,
+        marginBottom: 8,
+        fontWeight: '600',
+    },
+    criteriaRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    criteriaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 8,
+        marginBottom: 4,
+    },
+    criteriaDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginRight: 6,
+    },
+    criteriaText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
     errorContainer: {
         padding: 12,
         borderRadius: 10,
@@ -373,6 +475,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 24,
         fontSize: 13,
+    },
+    guestButton: {
+        marginTop: 16,
+        alignItems: 'center',
+        padding: 8,
+    },
+    guestButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        textDecorationLine: 'underline',
     },
 });
 

@@ -185,6 +185,7 @@ export const AuthProvider = ({ children }) => {
         error,
         signup,
         login,
+        loginAsGuest: () => setUser({ uid: 'guest', isGuest: true, displayName: 'Guest' }),
         logout,
         isAuthenticated: !!user,
         isDemo: user?.isDemo || false,

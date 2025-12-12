@@ -16,7 +16,7 @@ export const NotesProvider = ({ children }) => {
     useEffect(() => {
         let unsubscribe;
 
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             // Firestore Sync
             const q = query(
                 collection(db, 'notes'),
@@ -47,7 +47,7 @@ export const NotesProvider = ({ children }) => {
     };
 
     const addEntry = async (text, title = '') => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             await addDoc(collection(db, 'notes'), {
                 userId: user.uid,
                 title: title,
@@ -71,7 +71,7 @@ export const NotesProvider = ({ children }) => {
     };
 
     const updateEntry = async (id, newText, newTitle) => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             const noteRef = doc(db, 'notes', id);
             // We need to get the current note to update history properly, 
             // but for simplicity/speed we might skip history or do a transaction.
@@ -113,7 +113,7 @@ export const NotesProvider = ({ children }) => {
     };
 
     const deleteEntry = async (id) => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             await deleteDoc(doc(db, 'notes', id));
         } else {
             const updatedEntries = entries.filter(item => item.id !== id);

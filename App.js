@@ -1,4 +1,5 @@
 import 'react-native-get-random-values';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, useColorScheme, SafeAreaView, Platform, Animated, ActivityIndicator } from 'react-native';
@@ -12,6 +13,7 @@ import NotesScreen from './screens/NotesScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import AIScreen from './screens/AIScreen';
 import AuthScreen from './screens/AuthScreen';
+import ProfileModal from './components/ProfileModal';
 
 const TAB_WIDTH = 100;
 const TABS = ['Calendar', 'AI', 'Notes'];
@@ -19,15 +21,17 @@ const TABS = ['Calendar', 'AI', 'Notes'];
 function MainApp() {
   const systemScheme = useColorScheme();
   const [isDark, setIsDark] = useState(systemScheme === 'dark');
-  const [activeTab, setActiveTab] = useState('AI');
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState('AI'); // Default to AI
+  const [profileVisible, setProfileVisible] = useState(false);
   const theme = isDark ? themes.dark : themes.light;
 
   const { user, loading, logout, isAuthenticated } = useAuth();
 
   // Animation values
-  const tabIndicatorPosition = useRef(new Animated.Value(1)).current;
+  const tabIndicatorPosition = useRef(new Animated.Value(1)).current; // Start at index 1 (AI)
   const themeToggleRotate = useRef(new Animated.Value(0)).current;
+
+  // ... (animations same)
 
   useEffect(() => {
     const newIndex = TABS.indexOf(activeTab);
@@ -55,9 +59,13 @@ function MainApp() {
     setIsDark(!isDark);
   };
 
-  const handleLogout = async () => {
-    setShowUserMenu(false);
-    await logout();
+  const getHeaderTitle = () => {
+    switch (activeTab) {
+      case 'AI': return 'AI Assistant';
+      case 'Notes': return 'Timeline'; // Or 'My Notes'
+      case 'Calendar': return 'Calendar';
+      default: return 'Timeline';
+    }
   };
 
   const renderScreen = () => {
@@ -107,51 +115,33 @@ function MainApp() {
               <View style={styles.headerContent}>
                 <View style={styles.titleContainer}>
                   <View style={[styles.titleAccent, { backgroundColor: theme.primary }]} />
-                  <Text style={[styles.title, { color: theme.text }]}>Timeline</Text>
+                  <Text style={[styles.title, { color: theme.text }]}>{getHeaderTitle()}</Text>
                 </View>
                 <View style={styles.headerRight}>
                   {/* User Avatar */}
                   <TouchableOpacity
-                    onPress={() => setShowUserMenu(!showUserMenu)}
+                    onPress={() => setProfileVisible(true)}
                     style={[styles.avatarButton, { backgroundColor: theme.primaryLight }]}
                   >
                     <Text style={[styles.avatarText, { color: theme.primary }]}>
                       {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
                     </Text>
                   </TouchableOpacity>
-                  {/* Theme Toggle */}
                   <TouchableOpacity
                     onPress={toggleTheme}
                     style={[styles.themeButton, { backgroundColor: theme.backgroundSecondary }]}
                     activeOpacity={0.7}
                   >
-                    <Animated.Text style={[styles.themeIcon, { transform: [{ rotate: themeButtonRotation }] }]}>
-                      {isDark ? '☀️' : '🌙'}
-                    </Animated.Text>
+                    <Animated.View style={{ transform: [{ rotate: themeButtonRotation }] }}>
+                      <Ionicons
+                        name={isDark ? "moon" : "sunny"}
+                        size={24}
+                        color={isDark ? theme.text : theme.warning}
+                      />
+                    </Animated.View>
                   </TouchableOpacity>
                 </View>
               </View>
-
-              {/* User Menu Dropdown */}
-              {showUserMenu && (
-                <View style={[styles.userMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <View style={styles.userInfo}>
-                    <Text style={[styles.userName, { color: theme.text }]}>
-                      {user?.displayName || 'User'}
-                    </Text>
-                    <Text style={[styles.userEmail, { color: theme.textSecondary }]}>
-                      {user?.email}
-                    </Text>
-                  </View>
-                  <View style={[styles.menuDivider, { backgroundColor: theme.divider }]} />
-                  <TouchableOpacity
-                    style={[styles.logoutButton, { backgroundColor: theme.dangerLight }]}
-                    onPress={handleLogout}
-                  >
-                    <Text style={[styles.logoutText, { color: theme.danger }]}>Sign Out</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
 
               <View style={[styles.headerLine, { backgroundColor: theme.divider }]} />
             </View>
@@ -175,7 +165,6 @@ function MainApp() {
                     style={styles.tab}
                     onPress={() => {
                       setActiveTab(tab);
-                      setShowUserMenu(false);
                     }}
                     activeOpacity={0.7}
                   >
@@ -196,15 +185,17 @@ function MainApp() {
             </View>
 
             {/* Screen Content */}
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              activeOpacity={1}
-              onPress={() => setShowUserMenu(false)}
-            >
+            <View style={{ flex: 1 }}>
               {renderScreen()}
-            </TouchableOpacity>
+            </View>
           </SafeAreaView>
           <StatusBar style={isDark ? "light" : "dark"} />
+
+          <ProfileModal
+            visible={profileVisible}
+            onClose={() => setProfileVisible(false)}
+            theme={theme}
+          />
         </View>
       </EventsProvider>
     </NotesProvider>

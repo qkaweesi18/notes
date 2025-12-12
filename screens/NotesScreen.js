@@ -4,6 +4,7 @@ import { useNotes } from '../context/NotesContext';
 import TimelineItem from '../components/TimelineItem';
 import InputArea from '../components/InputArea';
 import DiffView from '../components/DiffView';
+import ProfileModal from '../components/ProfileModal';
 import NoteDetailScreen from './NoteDetailScreen';
 import { format } from 'date-fns';
 
@@ -12,6 +13,7 @@ const NotesScreen = ({ theme }) => {
     const [editingItem, setEditingItem] = useState(null);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [detailViewNote, setDetailViewNote] = useState(null);
+    const [profileVisible, setProfileVisible] = useState(false);
 
     // Animation values
     const modalSlideAnim = useRef(new Animated.Value(0)).current;
@@ -283,6 +285,31 @@ const styles = StyleSheet.create({
     },
     modalInputContainer: {
         paddingBottom: Platform.OS === 'ios' ? 40 : 0,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        letterSpacing: -0.5,
+    },
+    profileButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     }
 });
 

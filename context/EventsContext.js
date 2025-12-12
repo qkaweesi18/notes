@@ -16,7 +16,7 @@ export const EventsProvider = ({ children }) => {
     useEffect(() => {
         let unsubscribe;
 
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             // Firestore Sync
             const q = query(
                 collection(db, 'events'),
@@ -47,7 +47,7 @@ export const EventsProvider = ({ children }) => {
     };
 
     const addEvent = async (eventData) => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             await addDoc(collection(db, 'events'), {
                 userId: user.uid,
                 ...eventData,
@@ -66,7 +66,7 @@ export const EventsProvider = ({ children }) => {
     };
 
     const updateEvent = async (id, updatedData) => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             const eventRef = doc(db, 'events', id);
             await updateDoc(eventRef, updatedData);
         } else {
@@ -79,7 +79,7 @@ export const EventsProvider = ({ children }) => {
     };
 
     const deleteEvent = async (id) => {
-        if (user && user.uid) {
+        if (user && user.uid && !user.isGuest) {
             await deleteDoc(doc(db, 'events', id));
         } else {
             const updatedEvents = events.filter(event => event.id !== id);
